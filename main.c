@@ -1,13 +1,13 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
-#include <iostream>
+#include <stdbool.h>
 
-using namespace std;
-
-#define FILE_PATH "/home/bsag/Music/main()/Porter Robinson - Cheerleader.flac"
+#define FILE_PATH                                                              \
+	"/home/bsag/Music/main()/Porter Robinson, League of Legends - Everything " \
+	"Goes On.flac"
 
 void panic(const char *title, const char *details) {
-	cerr << title << ": " << details << endl;
+	printf("%s: %s\n", title, details);
 	Mix_CloseAudio();
 	SDL_Quit();
 	exit(1);
