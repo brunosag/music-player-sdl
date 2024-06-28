@@ -2,14 +2,12 @@
 #include <SDL2/SDL_mixer.h>
 #include <stdbool.h>
 
-#define FILE_PATH "/home/bsag/Music/main()/Porter Robinson - Musician.flac"
-
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
 static void panic_and_abort(const char *title, const char *text) {
 	fprintf(stderr, "PANIC: %s ... %s\n", title, text);
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, text, NULL);
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, text, window);
 
 	SDL_Quit();
 	exit(1);
@@ -35,15 +33,9 @@ int main() {
 		panic_and_abort("Mix_OpenAudio failed", SDL_GetError());
 	}
 
-	Mix_Music *music = Mix_LoadMUS(FILE_PATH);
-	if (music == NULL) {
-		panic_and_abort("Mix_LoadMUS failed", Mix_GetError());
-	}
+	Mix_Music *music = NULL;
 
-	if (Mix_PlayMusic(music, 0) != 0) {
-		panic_and_abort("Mix_PlayMusic failed", Mix_GetError());
-	}
-	Mix_PauseMusic();
+	SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
 
 	const SDL_Rect rewind_rect = {100, 100, 100, 100};
 	const SDL_Rect pause_rect = {400, 100, 100, 100};
@@ -63,6 +55,24 @@ int main() {
 					}
 					break;
 				}
+
+				case SDL_DROPFILE:
+					Mix_FreeMusic(music);
+					music = Mix_LoadMUS(e.drop.file);
+					if (music == NULL) {
+						SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+												 "Failed to load file!",
+												 Mix_GetError(), window);
+					} else {
+						if (Mix_PlayMusic(music, 0) != 0) {
+							SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+													 "Failed to play file!",
+													 Mix_GetError(), window);
+						}
+					}
+					SDL_free(e.drop.file);
+					break;
+
 				case SDL_QUIT:
 					keep_going = false;
 					break;
@@ -82,6 +92,9 @@ int main() {
 
 	Mix_FreeMusic(music);
 	Mix_CloseAudio();
+
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
 }

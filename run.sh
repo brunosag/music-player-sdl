@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-g++ main.c -o main -lSDL2 -lSDL2_mixer -lX11 -lXtst -Wall
+gcc main.c -o main -Wall -lSDL2 -lSDL2_mixer -lX11 -lXtst
 ./main
