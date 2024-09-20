@@ -1,6 +1,18 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
+#include <dirent.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+
+#define MAX_FILES 1024
+#define PATH_MAX_LENGTH 512
+
+typedef struct {
+	char files[MAX_FILES][PATH_MAX_LENGTH];
+	int length;
+} Playlist;
 
 static bool window_should_close = false;
 static SDL_Window *window;
@@ -18,8 +30,7 @@ static void panic_and_abort(const char *title, const char *text) {
 	exit(1);
 }
 
-static void load_music_file(const char *filepath) {
-	Mix_FreeMusic(music);
+static void load_music(const char *filepath) {
 	music = Mix_LoadMUS(filepath);
 	if (music == NULL) {
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed to load file!",
@@ -43,8 +54,52 @@ static void handle_mousebuttondown(SDL_Event event) {
 	}
 }
 
+static bool is_directory(const char *filepath) {
+	struct stat statbuf;
+	stat(filepath, &statbuf);
+	return S_ISDIR(statbuf.st_mode);
+}
+
+static Playlist get_playlist(const char *path) {
+	DIR *dir;
+	struct dirent *entry;
+	Playlist playlist;
+	playlist.length = 0;
+
+	dir = opendir(path);
+	if (dir) {
+		while ((entry = readdir(dir)) != NULL) {
+			if (entry->d_type == 8) { // Check if regular file
+				snprintf(playlist.files[playlist.length], PATH_MAX_LENGTH,
+						 "%s/%s", path, entry->d_name);
+				printf("%s\n", playlist.files[playlist.length]);
+				playlist.length++;
+			}
+		}
+		closedir(dir);
+	}
+
+	return playlist;
+}
+
+static void swap(char *a, char *b) {
+	char *tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
+
+static void shuffle(char arr[][], int arr_len) {
+	srand(time(NULL));
+	for (int i = 0; i < arr_len; i++) {
+	}
+}
+
 static void handle_dropfile(SDL_Event event) {
-	load_music_file(event.drop.file);
+	if (is_directory(event.drop.file)) {
+		Playlist playlist = get_playlist(event.drop.file);
+	} else {
+		load_music(event.drop.file);
+	}
 	if (music != NULL) {
 		play_music(music);
 	}
